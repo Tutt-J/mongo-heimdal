@@ -54,9 +54,18 @@ const accountLineSchema = new mongoose.Schema({
     required: [true, "AccountId is required."],
   },
   lastUpdated: {
-    type: Date,
-    required: [true, "Last Updated is required."],
+    type: Date
   },
+});
+
+accountLineSchema.pre("save", function (next) {
+  this.lastUpdated = Date.now();
+  next();
+});
+
+accountLineSchema.pre("findOneAndUpdate", function (next) {
+  this.set({ lastUpdated: Date.now() });
+  next();
 });
 
 const AccountLine = mongoose.model("AccountLine", accountLineSchema);
