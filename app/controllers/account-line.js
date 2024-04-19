@@ -3,38 +3,42 @@ const mongoose = require("mongoose");
 const Account = require("../models/account.js");
 
 const checkUserAccess = async (match, userId) => {
-  const lines = await AccountLine.aggregate([
-    {
-      $match: match,
-    },
-    {
-      $lookup: {
-        from: "accounts",
-        localField: "accountId",
-        foreignField: "_id",
-        as: "accountDetails",
+  try {
+    const lines = await AccountLine.aggregate([
+      {
+        $match: match,
       },
-    },
-    {
-      $unwind: "$accountDetails",
-    },
-    {
-      $match: {
-        "accountDetails.userId":
-          mongoose.Types.ObjectId.createFromHexString(userId),
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "accountId",
+          foreignField: "_id",
+          as: "accountDetails",
+        },
       },
-    },
-    {
-      $project: {
-        accountDetails: 0,
+      {
+        $unwind: "$accountDetails",
       },
-    },
-  ]);
+      {
+        $match: {
+          "accountDetails.userId":
+            mongoose.Types.ObjectId.createFromHexString(userId),
+        },
+      },
+      {
+        $project: {
+          accountDetails: 0,
+        },
+      },
+    ]);
 
-  if (lines.length === 0) {
+    if (lines.length === 0) {
+      return false;
+    }
+    return lines;
+  } catch (err) {
     return false;
   }
-  return lines;
 };
 
 exports.readAllByAccount = async (req, res) => {
@@ -63,7 +67,8 @@ exports.readAllByAccount = async (req, res) => {
 
 exports.readAllByAccountWithDetails = async (req, res) => {
   try {
-    const lines = await AccountLine.find({accountId: req.params.accountId}).populate("accountId").populate("categoryId");
+    const lines = await AccountLine.find({ accountId: req.params.accountId })
+      .populate("accountId");
     res.status(200).json(lines);
   } catch (err) {
     return res.status(500).json({
