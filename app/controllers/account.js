@@ -57,6 +57,21 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.delete = (req, res) => {
-  res.send("Welcome to account delete");
+exports.delete = async (req, res) => {
+  try {
+    const account = await Account.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.auth.userId
+    });
+
+    if(!account){
+      return res.status(404).json({message: "Accound not found."})
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message || "Some error occurred while deleting account.",
+    });
+  }
 };
